@@ -5,7 +5,8 @@ use warnings;
 
 use Device::HUAWEI::E355;
 
-my $e355 = Device::HUAWEI::E355->new('10.66.1.1');
+my $devip = shift || die "Usage: $0 <devip>\n";
+my $e355 = Device::HUAWEI::E355->new($devip);
 
 use Data::Dumper;
 print Dumper($e355->status);
