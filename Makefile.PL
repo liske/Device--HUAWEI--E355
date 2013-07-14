@@ -6,6 +6,7 @@ WriteMakefile(
                  strict            => 0,
                  vars              => 0,
                  Exporter          => 0,
+                 XML::TreePP       => 0,
                },
                ($] >= 5.005 ? 
                  (
