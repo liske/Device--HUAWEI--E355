@@ -19,7 +19,7 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT_OK);
 @ISA = qw(Exporter);
 @EXPORT_OK = (qw{PI DEG RAD KNOTS});
-$VERSION = '0.1';
+$VERSION = '0.01';
 
 use XML::TreePP;
 
