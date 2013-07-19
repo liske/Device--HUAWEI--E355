@@ -11,11 +11,11 @@ die "Usage: $0 <devip> <msg> <phone>+\n" if($#ARGV == -1);
 
 $|++;
 print "Username: ";
-my $uname = <>;
+my $uname = <STDIN>;
 chomp($uname);
 
 print "Password: ";
-my $passw = <>;
+my $passw = <STDIN>;
 chomp($passw);
 
 my $e355 = Device::HUAWEI::E355->new($devip, $uname, $passw);

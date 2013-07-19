@@ -21,6 +21,8 @@ use vars qw($VERSION @ISA @EXPORT_OK);
 @EXPORT_OK = (qw{PI DEG RAD KNOTS});
 $VERSION = '0.01';
 
+use MIME::Base64;
+use POSIX qw(strftime);
 use XML::TreePP;
 use XML::Writer;
 use XML::Writer::String;
@@ -31,7 +33,7 @@ use XML::Writer::String;
 
 The new() constructor
 
-  my $e355 = Huawei->new($devip);
+  my $e355 = Huawei->new($devip, $username, $password);
 
 =cut
 
@@ -42,8 +44,16 @@ sub new($$) {
 
     my $self = {
 	devip => shift,
+	auth_user => shift,
+	auth_pass => shift,
 	tpp => XML::TreePP->new(),
     };
+
+    # prepare password
+    if(defined($self->{auth_pass})) {
+	$self->{auth_pass} = encode_base64($self->{auth_pass});
+	chomp($self->{auth_pass});
+    }
 
     bless $self, $class;
     return $self;
@@ -74,6 +84,22 @@ sub _post($$$) {
     return $tree->{response} if($code == 200);
 
     return undef;
+}
+
+sub _auth() {
+    my ($self) = @_;
+
+    my $s = XML::Writer::String->new();
+    my $w = new XML::Writer( OUTPUT => $s );
+
+    $w->xmlDecl();
+    $w->startTag('request');
+    $w->dataElement('Username', $self->{auth_user});
+    $w->dataElement('Password', $self->{auth_pass});
+    $w->endTag();
+    $w->end();
+
+    return $self->_post('/api/user/login', $s->value());
 }
 
 =head2 status
@@ -141,19 +167,28 @@ Sends a SMS. Returns undef on error.
 sub send_sms($$@) {
     my ($self, $msg, @phones) = @_;
 
+    # prepare SMS DOM
     my $s = XML::Writer::String->new();
     my $w = new XML::Writer( OUTPUT => $s );
 
     $w->xmlDecl();
     $w->startTag('request');
+    $w->dataElement('Index', -1);
     $w->startTag('Phones');
     foreach my $phone (@phones) {
 	$w->dataElement('Phone', $phone);
     }
-    $w->dataElement('Content', $msg);
     $w->endTag();
+    $w->dataElement('Sca', '');
+    $w->dataElement('Content', $msg);
+    $w->dataElement('Length', length($msg));
+    $w->dataElement('Reserved', 1);
+    $w->dataElement('Date', strftime("%F %T", gmtime()));
     $w->endTag();
     $w->end();
+
+    # (re)authenticate (required to send SMS)
+    $self->_auth();
 
     return $self->_post('/api/sms/send-sms', $s->value());
 }
