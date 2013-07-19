@@ -22,6 +22,8 @@ use vars qw($VERSION @ISA @EXPORT_OK);
 $VERSION = '0.01';
 
 use XML::TreePP;
+use XML::Writer;
+use XML::Writer::String;
 
 =head1 CONSTRUCTOR
 
@@ -56,6 +58,18 @@ sub _get($$) {
     my $call = shift;
 
     my ($tree, $xml, $code) = $self->{tpp}->parsehttp(GET => "http://$self->{devip}$call");
+
+    return $tree->{response} if($code == 200);
+
+    return undef;
+}
+
+sub _post($$$) {
+    my $self = shift;
+    my $call = shift;
+    my $body = shift;
+
+    my ($tree, $xml, $code) = $self->{tpp}->parsehttp(POST => "http://$self->{devip}$call", $body);
 
     return $tree->{response} if($code == 200);
 
@@ -115,6 +129,33 @@ sub current_plmn($) {
     my $self = shift;
 
     return $self->_get('/api/net/current-plmn');
+}
+
+
+=head2 send_sms($phone, $msg)
+
+Sends a SMS. Returns undef on error.
+
+=cut
+
+sub send_sms($$@) {
+    my ($self, $msg, @phones) = @_;
+
+    my $s = XML::Writer::String->new();
+    my $w = new XML::Writer( OUTPUT => $s );
+
+    $w->xmlDecl();
+    $w->startTag('request');
+    $w->startTag('Phones');
+    foreach my $phone (@phones) {
+	$w->dataElement('Phone', $phone);
+    }
+    $w->dataElement('Content', $msg);
+    $w->endTag();
+    $w->endTag();
+    $w->end();
+
+    return $self->_post('/api/sms/send-sms', $s->value());
 }
 
 =head1 AUTHOR
