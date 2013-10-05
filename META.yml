@@ -9,6 +9,7 @@ requires:
     strict:                        0
     vars:                          0
     XML::TreePP                    0
+    XML::String
 
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17

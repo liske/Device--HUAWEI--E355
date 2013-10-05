@@ -16,4 +16,4 @@ The following packages are required by Device::HUAWEI::E355:
 * POSIX
 * XML::TreePP
 * XML::Writer
-* XML::Writer::Simple
+* XML::Writer::String
